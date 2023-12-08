@@ -15,3 +15,6 @@ reqwest = { version = "0.11", features = [
     "gzip",
     "native-tls",
 ] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+time = "0.3"
