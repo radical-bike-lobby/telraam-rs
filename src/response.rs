@@ -4,7 +4,10 @@ use std::{
 };
 
 use geojson::GeoJson;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{
+    de::{self, DeserializeOwned, Visitor},
+    Deserialize, Deserializer,
+};
 use serde_json::{Number, Value};
 
 #[derive(Deserialize)]
@@ -22,6 +25,12 @@ fn test_deserialize_welcome() {
 
     let welcome = serde_json::from_str::<WelcomeResponse>(json).expect("failed to parse json");
     assert_eq!("hello! Telraam server 2.0 is up and running", welcome.msg);
+}
+
+#[derive(Deserialize)]
+pub struct Status {
+    status_code: usize,
+    message: String,
 }
 
 #[derive(Deserialize)]
@@ -252,4 +261,124 @@ fn test_deserialize_traffic_snapshot() {
         &[4.47577215954854, 51.3021139617358],
         multi[0][0].as_slice()
     );
+}
+
+#[derive(Deserialize)]
+pub struct AllCameras {
+    #[serde(flatten)]
+    status: Status,
+    cameras: Vec<Camera>,
+}
+
+#[derive(Deserialize)]
+pub struct Camera {
+    instance_id: isize,
+    mac: usize,
+    user_id: isize,
+    segment_id: isize,
+    direction: bool,
+    status: String,
+    manual: bool,
+    #[serde(with = "humantime_serde")]
+    time_added: SystemTime,
+    #[serde(with = "humantime_serde")]
+    time_end: Option<SystemTime>,
+    #[serde(with = "humantime_serde")]
+    last_data_package: SystemTime,
+    #[serde(with = "humantime_serde")]
+    first_data_package: SystemTime,
+    pedestrians_left: bool,
+    pedestrians_right: bool,
+    bikes_left: bool,
+    bikes_right: bool,
+    cars_left: bool,
+    cars_right: bool,
+    #[serde(deserialize_with = "from_yes_no")]
+    is_calibration_done: bool,
+}
+
+fn from_yes_no<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct YesNoVisitor;
+
+    impl Visitor<'_> for YesNoVisitor {
+        type Value = bool;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(formatter, "a 'yes' or 'no' value")
+        }
+
+        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+        where
+            E: serde::de::Error,
+        {
+            match v {
+                "yes" => Ok(true),
+                "no" => Ok(false),
+                _ => Err(de::Error::unknown_variant(v, &["yes", "no"])),
+            }
+        }
+    }
+
+    deserializer.deserialize_str(YesNoVisitor)
+}
+
+#[test]
+fn test_deserialize_all_cameras() {
+    let json = r#"
+{
+    "status_code": 200,
+    "message": "ok",
+    "cameras": [
+      {
+        "instance_id": 1692,
+        "mac": 202481587145269,
+        "user_id": 414,
+        "segment_id": 348917,
+        "direction": true,
+        "status": "non_active",
+        "manual": false,
+        "time_added": "2019-10-02T19:42:54.343Z",
+        "time_end": null,
+        "last_data_package": "2021-05-02T10:56:15.402Z",
+        "first_data_package": "1970-01-01T00:00:00.000Z",
+        "pedestrians_left": false,
+        "pedestrians_right": true,
+        "bikes_left": true,
+        "bikes_right": true,
+        "cars_left": true,
+        "cars_right": true,
+        "is_calibration_done": "yes"
+      },
+      {
+        "instance_id": 1691,
+        "mac": 202481587145269,
+        "user_id": 414,
+        "segment_id": 348917,
+        "direction": false,
+        "status": "non_active",
+        "manual": false,
+        "time_added": "2019-06-26T07:00:37.546Z",
+        "time_end": "2019-10-02T19:42:54.343Z",
+        "last_data_package": "2021-01-05T08:33:37.913Z",
+        "first_data_package": "1970-01-01T00:00:00.000Z",
+        "pedestrians_left": false,
+        "pedestrians_right": true,
+        "bikes_left": true,
+        "bikes_right": true,
+        "cars_left": true,
+        "cars_right": true,
+        "is_calibration_done": "no"
+      }
+    ]
+  }
+"#;
+
+    let cameras = serde_json::from_str::<AllCameras>(json).expect("failed to parse json");
+    assert_eq!(200, cameras.status.status_code);
+    assert_eq!("ok", cameras.status.message);
+    assert!(cameras.cameras[0].is_calibration_done);
+    assert!(!cameras.cameras[1].is_calibration_done);
 }
