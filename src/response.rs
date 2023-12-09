@@ -382,3 +382,111 @@ fn test_deserialize_all_cameras() {
     assert!(cameras.cameras[0].is_calibration_done);
     assert!(!cameras.cameras[1].is_calibration_done);
 }
+
+#[derive(Deserialize)]
+pub struct SegmentResponse {
+    #[serde(flatten)]
+    status: Status,
+    #[serde(flatten)]
+    segment: GeoJson,
+}
+
+#[test]
+fn test_deserialize_segment() {
+    let json = r#"
+      {
+        "status_code": 200,
+        "message": "ok",
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "geometry": {
+              "type": "MultiLineString",
+              "coordinates": [
+                [
+                  [
+                    4.71129799121917,
+                    50.8643967118925
+                  ],
+                  [
+                    4.71131689135236,
+                    50.8642862877756
+                  ],
+                  [
+                    4.71132373881259,
+                    50.8642670067756
+                  ],
+                  [
+                    4.71137253782927,
+                    50.8641296300352
+                  ],
+                  [
+                    4.71143685119098,
+                    50.8639917424206
+                  ],
+                  [
+                    4.71151928065087,
+                    50.8638146687918
+                  ],
+                  [
+                    4.7116242705432,
+                    50.8636377263723
+                  ],
+                  [
+                    4.71172539021883,
+                    50.8635120762697
+                  ],
+                  [
+                    4.71176427433283,
+                    50.8633690745834
+                  ],
+                  [
+                    4.71188626758468,
+                    50.8627563858191
+                  ],
+                  [
+                    4.71190872556415,
+                    50.8626435939865
+                  ]
+                ]
+              ]
+            },
+            "properties": {
+              "oidn": 348917,
+              "first_data_package": "2019-06-26T11:00:00.000Z",
+              "last_data_package": "2021-01-25T09:35:43.725Z",
+              "speed": 50,
+              "oneway": false,
+              "road_type": "",
+              "road_speed": "",
+              "pedestrian": 13.1787675411836,
+              "bike": 32.9469188529591,
+              "car": 237.217815741306,
+              "lorry": 70.2867602196461,
+              "speed_histogram": [
+                19.7681513117755,
+                30.7504575960952,
+                133.9841366687,
+                46.1256863941428,
+                4.39292251372788,
+                2.19646125686394
+              ],
+              "speed_buckets": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            }
+          }
+        ]
+      }
+    "#;
+
+    let segment = serde_json::from_str::<SegmentResponse>(json).expect("failed to parse json");
+    assert_eq!(200, segment.status.status_code);
+    assert_eq!("ok", segment.status.message);
+}
