@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use reqwest::Method;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{Map, Value};
 
-use crate::response::WelcomeResponse;
+use crate::response::{Response, WelcomeResponse};
 
 /// Endpoint is a trait that defines the shape of all the API endpoints in Telraam
 ///
@@ -13,10 +13,11 @@ pub trait Endpoint {
     const PATH: &'static str;
     const METHOD: Method;
 
-    type Response: DeserializeOwned;
+    type Response: Response + DeserializeOwned;
+    type Request: Serialize;
 
     /// Payload should only be associated for POST, PUT, or PATCH requests
-    fn payload(&self) -> Option<Map<String, Value>> {
+    fn payload(&self) -> Option<&Self::Request> {
         None
     }
 
@@ -33,4 +34,5 @@ impl Endpoint for Welcome {
     const METHOD: Method = Method::GET;
 
     type Response = WelcomeResponse;
+    type Request = ();
 }

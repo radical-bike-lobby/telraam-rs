@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use telraam_rs::{client::TelraamClient, endpoint};
+use telraam_rs::{client::TelraamClient, endpoint, response::Response};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -19,6 +19,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let response = client.send(&endpoint::Welcome)?;
 
-    println!("msg = {}", response.msg);
+    println!("msg = {}", response.status().message);
     Ok(())
 }

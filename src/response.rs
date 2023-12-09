@@ -8,18 +8,15 @@ use serde::{
 
 use crate::error::Error;
 
-trait Response {
+pub trait Response {
     fn status(&self) -> &Status;
-}
-
-#[derive(Deserialize)]
-pub struct WelcomeResponse {
-    pub msg: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Status {
+    #[serde(default)]
     pub status_code: usize,
+    #[serde(alias = "msg")]
     pub message: String,
 }
 
@@ -38,6 +35,18 @@ impl Status {
         } else {
             Err(Error::Non200Response(self))
         }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct WelcomeResponse {
+    #[serde(flatten)]
+    status: Status,
+}
+
+impl Response for WelcomeResponse {
+    fn status(&self) -> &Status {
+        &self.status
     }
 }
 
@@ -247,7 +256,10 @@ mod tests {
         "#;
 
         let welcome = serde_json::from_str::<WelcomeResponse>(json).expect("failed to parse json");
-        assert_eq!("hello! Telraam server 2.0 is up and running", welcome.msg);
+        assert_eq!(
+            "hello! Telraam server 2.0 is up and running",
+            welcome.status.message
+        );
     }
 
     #[test]
