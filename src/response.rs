@@ -6,12 +6,16 @@ use serde::{
     Deserialize, Deserializer,
 };
 
+trait Response {
+    fn status(&self) -> &Status;
+}
+
 #[derive(Deserialize)]
 pub struct WelcomeResponse {
     pub msg: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct Status {
     status_code: usize,
     message: String,
@@ -21,7 +25,14 @@ pub struct Status {
 pub struct TrafficResponse {
     #[serde(flatten)]
     status: Status,
-    report: Vec<Report>,
+    #[serde(rename = "report")]
+    reports: Vec<Report>,
+}
+
+impl Response for TrafficResponse {
+    fn status(&self) -> &Status {
+        &self.status
+    }
 }
 
 #[derive(Deserialize)]
@@ -52,15 +63,21 @@ pub struct Report {
 }
 
 #[derive(Deserialize)]
-pub struct TrafficSnapshot {
+pub struct TrafficSnapshotResponse {
     #[serde(flatten)]
     status: Status,
     #[serde(flatten)]
     geo: GeoJson,
 }
 
+impl Response for TrafficSnapshotResponse {
+    fn status(&self) -> &Status {
+        &self.status
+    }
+}
+
 #[derive(Deserialize)]
-pub struct AllCameras {
+pub struct AllCamerasResponse {
     #[serde(flatten)]
     status: Status,
     cameras: Vec<Camera>,
@@ -91,6 +108,12 @@ pub struct Camera {
     cars_right: bool,
     #[serde(deserialize_with = "from_yes_no")]
     is_calibration_done: bool,
+}
+
+impl Response for AllCamerasResponse {
+    fn status(&self) -> &Status {
+        &self.status
+    }
 }
 
 fn from_yes_no<'de, D>(deserializer: D) -> Result<bool, D::Error>
@@ -127,6 +150,12 @@ pub struct SegmentResponse {
     status: Status,
     #[serde(flatten)]
     segment: GeoJson,
+}
+
+impl Response for SegmentResponse {
+    fn status(&self) -> &Status {
+        &self.status
+    }
 }
 
 #[cfg(test)]
@@ -285,11 +314,11 @@ mod tests {
         let traffic = serde_json::from_str::<TrafficResponse>(json).expect("failed to parse json");
         assert_eq!(200, traffic.status.status_code);
         assert_eq!("ok", traffic.status.message);
-        assert_eq!(2, traffic.report.len());
-        assert_eq!(-1, traffic.report[0].instance_id);
+        assert_eq!(2, traffic.reports.len());
+        assert_eq!(-1, traffic.reports[0].instance_id);
         assert_eq!(
             SystemTime::UNIX_EPOCH + Duration::from_secs(1604041200),
-            traffic.report[0].date
+            traffic.reports[0].date
         )
     }
 
@@ -302,7 +331,8 @@ mod tests {
             .read_to_string(&mut json)
             .expect("failed to read test data");
 
-        let traffic = serde_json::from_str::<TrafficSnapshot>(&json).expect("failed to parse json");
+        let traffic =
+            serde_json::from_str::<TrafficSnapshotResponse>(&json).expect("failed to parse json");
         assert_eq!(200, traffic.status.status_code);
         assert_eq!("ok", traffic.status.message);
 
@@ -392,7 +422,8 @@ mod tests {
       }
     "#;
 
-        let cameras = serde_json::from_str::<AllCameras>(json).expect("failed to parse json");
+        let cameras =
+            serde_json::from_str::<AllCamerasResponse>(json).expect("failed to parse json");
         assert_eq!(200, cameras.status.status_code);
         assert_eq!("ok", cameras.status.message);
         assert!(cameras.cameras[0].is_calibration_done);
