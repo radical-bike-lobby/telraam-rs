@@ -6,6 +6,8 @@ use serde::{
     Deserialize, Deserializer,
 };
 
+use crate::error::Error;
+
 trait Response {
     fn status(&self) -> &Status;
 }
@@ -15,10 +17,28 @@ pub struct WelcomeResponse {
     pub msg: String,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct Status {
-    status_code: usize,
-    message: String,
+    pub status_code: usize,
+    pub message: String,
+}
+
+impl Status {
+    fn try_to_error(&self) -> Result<(), Error> {
+        if self.status_code <= 299 {
+            Ok(())
+        } else {
+            Err(Error::Non200Response(self.clone()))
+        }
+    }
+
+    fn try_into_error(self) -> Result<(), Error> {
+        if self.status_code <= 299 {
+            Ok(())
+        } else {
+            Err(Error::Non200Response(self))
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -35,31 +55,43 @@ impl Response for TrafficResponse {
     }
 }
 
+impl TrafficResponse {
+    pub fn reports(&self) -> Result<&[Report], Error> {
+        self.status.try_to_error()?;
+        Ok(&self.reports)
+    }
+
+    pub fn take_reports(self) -> Result<Vec<Report>, Error> {
+        self.status.try_into_error()?;
+        Ok(self.reports)
+    }
+}
+
 #[derive(Deserialize)]
 pub struct Report {
-    instance_id: isize,
-    segment_id: isize,
+    pub instance_id: isize,
+    pub segment_id: isize,
     #[serde(with = "humantime_serde")]
-    date: SystemTime,
-    interval: String,
-    uptime: f32,
-    heavy: f32,
-    car: f32,
-    bike: f32,
-    pedestrian: f32,
-    heavy_lft: f32,
-    heavy_rgt: f32,
-    car_lft: f32,
-    car_rgt: f32,
-    bike_lft: f32,
-    bike_rgt: f32,
-    pedestrian_lft: f32,
-    pedestrian_rgt: f32,
-    direction: usize,
-    timezone: String,
-    car_speed_hist_0to70plus: Vec<f32>,
-    car_speed_hist_0to120plus: Vec<f32>,
-    v85: f32,
+    pub date: SystemTime,
+    pub interval: String,
+    pub uptime: f32,
+    pub heavy: f32,
+    pub car: f32,
+    pub bike: f32,
+    pub pedestrian: f32,
+    pub heavy_lft: f32,
+    pub heavy_rgt: f32,
+    pub car_lft: f32,
+    pub car_rgt: f32,
+    pub bike_lft: f32,
+    pub bike_rgt: f32,
+    pub pedestrian_lft: f32,
+    pub pedestrian_rgt: f32,
+    pub direction: usize,
+    pub timezone: String,
+    pub car_speed_hist_0to70plus: Vec<f32>,
+    pub car_speed_hist_0to120plus: Vec<f32>,
+    pub v85: f32,
 }
 
 #[derive(Deserialize)]
@@ -76,6 +108,18 @@ impl Response for TrafficSnapshotResponse {
     }
 }
 
+impl TrafficSnapshotResponse {
+    pub fn snapshot(&self) -> Result<&GeoJson, Error> {
+        self.status.try_to_error()?;
+        Ok(&self.geo)
+    }
+
+    pub fn take_snapshot(self) -> Result<GeoJson, Error> {
+        self.status.try_into_error()?;
+        Ok(self.geo)
+    }
+}
+
 #[derive(Deserialize)]
 pub struct AllCamerasResponse {
     #[serde(flatten)]
@@ -85,35 +129,29 @@ pub struct AllCamerasResponse {
 
 #[derive(Deserialize)]
 pub struct Camera {
-    instance_id: isize,
-    mac: usize,
-    user_id: isize,
-    segment_id: isize,
-    direction: bool,
-    status: String,
-    manual: bool,
+    pub instance_id: isize,
+    pub mac: usize,
+    pub user_id: isize,
+    pub segment_id: isize,
+    pub direction: bool,
+    pub status: String,
+    pub manual: bool,
     #[serde(with = "humantime_serde")]
-    time_added: SystemTime,
+    pub time_added: SystemTime,
     #[serde(with = "humantime_serde")]
-    time_end: Option<SystemTime>,
+    pub time_end: Option<SystemTime>,
     #[serde(with = "humantime_serde")]
-    last_data_package: SystemTime,
+    pub last_data_package: SystemTime,
     #[serde(with = "humantime_serde")]
-    first_data_package: SystemTime,
-    pedestrians_left: bool,
-    pedestrians_right: bool,
-    bikes_left: bool,
-    bikes_right: bool,
-    cars_left: bool,
-    cars_right: bool,
+    pub first_data_package: SystemTime,
+    pub pedestrians_left: bool,
+    pub pedestrians_right: bool,
+    pub bikes_left: bool,
+    pub bikes_right: bool,
+    pub cars_left: bool,
+    pub cars_right: bool,
     #[serde(deserialize_with = "from_yes_no")]
-    is_calibration_done: bool,
-}
-
-impl Response for AllCamerasResponse {
-    fn status(&self) -> &Status {
-        &self.status
-    }
+    pub is_calibration_done: bool,
 }
 
 fn from_yes_no<'de, D>(deserializer: D) -> Result<bool, D::Error>
@@ -144,6 +182,24 @@ where
     deserializer.deserialize_str(YesNoVisitor)
 }
 
+impl Response for AllCamerasResponse {
+    fn status(&self) -> &Status {
+        &self.status
+    }
+}
+
+impl AllCamerasResponse {
+    pub fn cameras(&self) -> Result<&[Camera], Error> {
+        self.status.try_to_error()?;
+        Ok(&self.cameras)
+    }
+
+    pub fn take_cameras(self) -> Result<Vec<Camera>, Error> {
+        self.status.try_into_error()?;
+        Ok(self.cameras)
+    }
+}
+
 #[derive(Deserialize)]
 pub struct SegmentResponse {
     #[serde(flatten)]
@@ -155,6 +211,18 @@ pub struct SegmentResponse {
 impl Response for SegmentResponse {
     fn status(&self) -> &Status {
         &self.status
+    }
+}
+
+impl SegmentResponse {
+    pub fn segments(&self) -> Result<&GeoJson, Error> {
+        self.status.try_to_error()?;
+        Ok(&self.segment)
+    }
+
+    pub fn take_segments(self) -> Result<GeoJson, Error> {
+        self.status.try_into_error()?;
+        Ok(self.segment)
     }
 }
 

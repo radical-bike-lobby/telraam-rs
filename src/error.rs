@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::response::Status;
+
 #[derive(Error, Debug)]
 pub enum Error {
     /// An error occured on the request
