@@ -1,7 +1,11 @@
-use std::time::{Duration, SystemTime};
+use std::{
+    io::Read,
+    time::{Duration, SystemTime},
+};
 
+use geojson::GeoJson;
 use serde::{de::DeserializeOwned, Deserialize};
-use serde_json::Value;
+use serde_json::{Number, Value};
 
 #[derive(Deserialize)]
 pub struct WelcomeResponse {
@@ -192,4 +196,60 @@ fn test_deserialize_traffic() {
         SystemTime::UNIX_EPOCH + Duration::from_secs(1604041200),
         traffic.report[0].date
     )
+}
+
+#[derive(Deserialize)]
+pub struct TrafficSnapshot {
+    status_code: usize,
+    message: String,
+    #[serde(flatten)]
+    geo: GeoJson,
+}
+
+#[test]
+fn test_deserialize_traffic_snapshot() {
+    let mut json = String::new();
+
+    std::fs::File::open("tests/data/traffic_snapshot.json")
+        .expect("failed to open test data")
+        .read_to_string(&mut json)
+        .expect("failed to read test data");
+
+    let traffic = serde_json::from_str::<TrafficSnapshot>(&json).expect("failed to parse json");
+    assert_eq!(200, traffic.status_code);
+    assert_eq!("ok", traffic.message);
+
+    let collection = if let GeoJson::FeatureCollection(collection) = &traffic.geo {
+        collection
+    } else {
+        panic!("should have been a feature collection")
+    };
+    assert!(collection.bbox.is_none());
+    assert!(collection.foreign_members.is_none());
+    assert_eq!(3675, collection.features.len());
+
+    let feature = &collection.features[0];
+    assert!(feature.bbox.is_none());
+    assert!(feature.id.is_none());
+    assert!(feature.foreign_members.is_none());
+    assert_eq!(
+        Value::Number(Number::from(24948)),
+        feature.properties.as_ref().expect("properties missing")["segment_id"]
+    );
+    assert!(feature.geometry.is_some());
+
+    let geomentry = feature.geometry.as_ref().unwrap();
+    assert!(geomentry.bbox.is_none());
+    assert!(geomentry.foreign_members.is_none());
+
+    let multi = if let geojson::Value::MultiLineString(ref multi) = geomentry.value {
+        multi
+    } else {
+        panic!("expected MultiLineString")
+    };
+
+    assert_eq!(
+        &[4.47577215954854, 51.3021139617358],
+        multi[0][0].as_slice()
+    );
 }
