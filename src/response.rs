@@ -35,8 +35,8 @@ pub struct Status {
 
 #[derive(Deserialize)]
 pub struct TrafficResponse {
-    status_code: usize,
-    message: String,
+    #[serde(flatten)]
+    status: Status,
     report: Vec<Report>,
 }
 
@@ -197,8 +197,8 @@ fn test_deserialize_traffic() {
     "#;
 
     let traffic = serde_json::from_str::<TrafficResponse>(json).expect("failed to parse json");
-    assert_eq!(200, traffic.status_code);
-    assert_eq!("ok", traffic.message);
+    assert_eq!(200, traffic.status.status_code);
+    assert_eq!("ok", traffic.status.message);
     assert_eq!(2, traffic.report.len());
     assert_eq!(-1, traffic.report[0].instance_id);
     assert_eq!(
@@ -209,8 +209,8 @@ fn test_deserialize_traffic() {
 
 #[derive(Deserialize)]
 pub struct TrafficSnapshot {
-    status_code: usize,
-    message: String,
+    #[serde(flatten)]
+    status: Status,
     #[serde(flatten)]
     geo: GeoJson,
 }
@@ -225,8 +225,8 @@ fn test_deserialize_traffic_snapshot() {
         .expect("failed to read test data");
 
     let traffic = serde_json::from_str::<TrafficSnapshot>(&json).expect("failed to parse json");
-    assert_eq!(200, traffic.status_code);
-    assert_eq!("ok", traffic.message);
+    assert_eq!(200, traffic.status.status_code);
+    assert_eq!("ok", traffic.status.message);
 
     let collection = if let GeoJson::FeatureCollection(collection) = &traffic.geo {
         collection
