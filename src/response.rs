@@ -130,7 +130,7 @@ impl TrafficSnapshotResponse {
 }
 
 #[derive(Deserialize)]
-pub struct AllCamerasResponse {
+pub struct CamerasResponse {
     #[serde(flatten)]
     status: Status,
     cameras: Vec<Camera>,
@@ -191,13 +191,13 @@ where
     deserializer.deserialize_str(YesNoVisitor)
 }
 
-impl Response for AllCamerasResponse {
+impl Response for CamerasResponse {
     fn status(&self) -> &Status {
         &self.status
     }
 }
 
-impl AllCamerasResponse {
+impl CamerasResponse {
     pub fn cameras(&self) -> Result<&[Camera], Error> {
         self.status.try_to_error()?;
         Ok(&self.cameras)
@@ -502,8 +502,7 @@ mod tests {
       }
     "#;
 
-        let cameras =
-            serde_json::from_str::<AllCamerasResponse>(json).expect("failed to parse json");
+        let cameras = serde_json::from_str::<CamerasResponse>(json).expect("failed to parse json");
         assert_eq!(200, cameras.status.status_code);
         assert_eq!("ok", cameras.status.message);
         assert!(cameras.cameras[0].is_calibration_done);

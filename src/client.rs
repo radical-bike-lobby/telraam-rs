@@ -32,12 +32,18 @@ impl TelraamClient {
     }
 
     pub fn send<E: Endpoint>(&self, endpoint: &E) -> Result<E::Response, Box<dyn Error>> {
-        let url = format!(
+        let mut url = format!(
             "{base}/{version}/{endpoint}",
             base = TELRAAM_NET,
             version = crate::VER,
             endpoint = E::PATH
         );
+
+        // add the path params, for things like instance IDs
+        if let Some(path_params) = endpoint.path_params() {
+            url.push('/');
+            url.push_str(path_params)
+        };
 
         let request = self.0.request(E::METHOD, url).query(&endpoint.params());
 

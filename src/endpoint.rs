@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::SystemTime};
 use reqwest::Method;
 use serde::{de::DeserializeOwned, Serialize, Serializer};
 
-use crate::response::{AllCamerasResponse, Response, TrafficResponse, WelcomeResponse};
+use crate::response::{CamerasResponse, Response, TrafficResponse, WelcomeResponse};
 
 /// Endpoint is a trait that defines the shape of all the API endpoints in Telraam
 ///
@@ -23,6 +23,11 @@ pub trait Endpoint {
     /// Parameters to add to the request
     fn params(&self) -> HashMap<String, Option<String>> {
         HashMap::new()
+    }
+
+    /// Path params additional parameters to add to the path
+    fn path_params(&self) -> Option<&str> {
+        None
     }
 }
 
@@ -90,8 +95,24 @@ impl Endpoint for AllAvailableCameras {
     const PATH: &'static str = "cameras";
     const METHOD: Method = Method::GET;
 
-    type Response = AllCamerasResponse;
+    type Response = CamerasResponse;
     type Request = ();
+}
+
+pub struct CamerasBySegmentId {
+    segment_id: String,
+}
+
+impl Endpoint for CamerasBySegmentId {
+    const PATH: &'static str = "cameras";
+    const METHOD: Method = Method::GET;
+
+    type Response = CamerasResponse;
+    type Request = ();
+
+    fn path_params(&self) -> Option<&str> {
+        Some(&self.segment_id)
+    }
 }
 
 #[cfg(test)]
