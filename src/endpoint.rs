@@ -170,6 +170,8 @@ impl Endpoint for AllSegments {
     type Request = ();
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct SegmentById {
     segment_id: String,
 }
