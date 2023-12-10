@@ -19,6 +19,7 @@ enum Commands {
     Traffic(endpoint::Traffic),
     LiveTrafficSnapshot(endpoint::LiveTrafficSnapshot),
     AllAvailableCameras(endpoint::AllAvailableCameras),
+    CamerasBySegmentId(endpoint::CamerasBySegmentId),
 }
 
 fn welcome(
@@ -57,6 +58,15 @@ fn all_available_cameras(
     Ok(())
 }
 
+fn cameras_by_segmant_id(
+    client: &TelraamClient,
+    request: &endpoint::CamerasBySegmentId,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let cameras = client.send(request)?.take_cameras()?;
+    println!("{}", serde_json::to_string_pretty(&cameras)?);
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
@@ -68,6 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Traffic(traffic_req) => traffic(&client, traffic_req)?,
         Commands::LiveTrafficSnapshot(traffic_req) => live_traffic_snapshot(&client, traffic_req)?,
         Commands::AllAvailableCameras(cameras_req) => all_available_cameras(&client, cameras_req)?,
+        Commands::CamerasBySegmentId(cameras_req) => cameras_by_segmant_id(&client, cameras_req)?,
     }
 
     Ok(())

@@ -122,6 +122,8 @@ impl Endpoint for AllAvailableCameras {
     type Request = ();
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct CamerasBySegmentId {
     segment_id: String,
 }
