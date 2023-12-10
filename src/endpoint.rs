@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::SystemTime};
 use reqwest::Method;
 use serde::{de::DeserializeOwned, Serialize, Serializer};
 
-use crate::response::{Response, TrafficResponse, WelcomeResponse};
+use crate::response::{AllCamerasResponse, Response, TrafficResponse, WelcomeResponse};
 
 /// Endpoint is a trait that defines the shape of all the API endpoints in Telraam
 ///
@@ -81,6 +81,16 @@ impl Endpoint for LiveTrafficSnapshot {
     const METHOD: Method = Method::GET;
 
     type Response = TrafficResponse;
+    type Request = ();
+}
+
+pub struct AllAvailableCameras;
+
+impl Endpoint for AllAvailableCameras {
+    const PATH: &'static str = "cameras";
+    const METHOD: Method = Method::GET;
+
+    type Response = AllCamerasResponse;
     type Request = ();
 }
 
