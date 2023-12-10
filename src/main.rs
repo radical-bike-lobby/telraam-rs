@@ -1,3 +1,7 @@
+//! Telraam CLI for working with the Telraam API.
+
+#![allow(clippy::print_stdout)]
+
 use clap::{Parser, Subcommand};
 
 use telraam::{client::TelraamClient, endpoint, response::Response};

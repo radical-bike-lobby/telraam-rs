@@ -42,3 +42,19 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 time = "0.3"
 thiserror = "1.0.50"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+non_snake_case = "warn"
+non_upper_case_globals = "warn"
+rust_2018_idioms = "warn"
+rust_2021_compatibility = "warn"
+unreachable_pub = "warn"
+
+[lints.clippy]
+default_trait_access = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+unimplemented = "warn"
+use_self = "warn"

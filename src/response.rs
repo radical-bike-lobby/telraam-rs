@@ -1,3 +1,5 @@
+//! All Response types from the Telraam API
+
 use std::time::SystemTime;
 
 use geojson::GeoJson;
@@ -8,14 +10,19 @@ use serde::{
 
 use crate::error::Error;
 
+/// All Responses have a status and must be Deserializable
 pub trait Response: DeserializeOwned {
+    /// Return the status from the request
     fn status(&self) -> &Status;
 }
 
+/// Status contains an error and possibly any associated message from the request
 #[derive(Clone, Debug, Deserialize)]
 pub struct Status {
+    /// HTTP type error code, 200 is good
     #[serde(default)]
     pub status_code: usize,
+    /// Message returned by Telraam
     #[serde(alias = "msg")]
     pub message: String,
 }
@@ -38,6 +45,7 @@ impl Status {
     }
 }
 
+/// The simple response from the Welcome API
 #[derive(Deserialize)]
 pub struct WelcomeResponse {
     #[serde(flatten)]
@@ -50,6 +58,7 @@ impl Response for WelcomeResponse {
     }
 }
 
+/// Response from [`crate::endpoint::Traffic`]
 #[derive(Deserialize)]
 pub struct TrafficResponse {
     #[serde(flatten)]
@@ -65,44 +74,70 @@ impl Response for TrafficResponse {
 }
 
 impl TrafficResponse {
+    /// Get a reference to all the reports returned
     pub fn reports(&self) -> Result<&[Report], Error> {
         self.status.try_to_error()?;
         Ok(&self.reports)
     }
 
+    /// Take the reports from the response
     pub fn take_reports(self) -> Result<Vec<Report>, Error> {
         self.status.try_into_error()?;
         Ok(self.reports)
     }
 }
 
+/// Report data returned from the [`crate::endpoint::Traffic`] request
 #[derive(Deserialize, Serialize)]
 pub struct Report {
+    /// the instance identifier for "instance" level calls ("-1" for "segment" level calls)
     pub instance_id: isize,
+    /// the segment identifier for "segment" level calls (in the future when "instance" calls are implemented too, this will read "-1")
     pub segment_id: isize,
+    /// ISO timeflag (date and UTC time) of the reporting interval (beginning of the interval)
     #[serde(with = "humantime_serde")]
     pub date: SystemTime,
+    /// can be "hourly" or "daily" for hourly or daily aggregate data, respectively
     pub interval: String,
+    /// between 0 and 1, represents the portion of the reporting interval (hour or day) that was actively spent counting the traffic (background calculation intervals in hourly periods, and the night time in daily periods contribute to values being less than 1)
     pub uptime: f32,
+    /// the number of heavy vehicles (called lorry in older APIs, but all stand for the same: anything larger than car) on this day (and in this hour)
     pub heavy: f32,
+    /// the number of cars
     pub car: f32,
+    /// the number of two-wheelers (mainly cyclists and motorbikes)
     pub bike: f32,
+    /// the number of pedestrians
     pub pedestrian: f32,
+    /// heavy count from left
     pub heavy_lft: f32,
+    /// heavy count from right
     pub heavy_rgt: f32,
+    /// car count from left
     pub car_lft: f32,
+    /// car count from right
     pub car_rgt: f32,
+    /// bike count from left
     pub bike_lft: f32,
+    /// bike count from right
     pub bike_rgt: f32,
+    /// pedestrian count from left
     pub pedestrian_lft: f32,
+    /// pedestrian count from right
     pub pedestrian_rgt: f32,
+    /// "1" - disregard, this is an internal consistency value making sure that when multiple cameras on different sides of the street are aggregated then the left and right directions are handled properly
     pub direction: usize,
+    /// The name of the Time zone where the segment can be found, which can be used to convert reported UTC timestamps to local times
     pub timezone: String,
+    /// the estimated car speed distribution in 10 km/h bins from 0 to 70+ km/h (in percentage of the total 100%)
     pub car_speed_hist_0to70plus: Vec<f32>,
+    /// the estimated car speed distribution in 5 km/h bins from 0 to 120+ km/h (in percentage of the total 100%)
     pub car_speed_hist_0to120plus: Vec<f32>,
+    /// the estimated car speed limit in km/h that 85% of all cars respect (15% of drivers drive faster than this limit). Just like all other speed related measurements, the accuracy of this value is likely not better than +/-10%.
     pub v85: f32,
 }
 
+/// Response from [`crate::endpoint::LiveTrafficSnapshot`]
 #[derive(Deserialize)]
 pub struct TrafficSnapshotResponse {
     #[serde(flatten)]
@@ -118,17 +153,20 @@ impl Response for TrafficSnapshotResponse {
 }
 
 impl TrafficSnapshotResponse {
+    /// Get a reference to the GeoJson data from the response
     pub fn snapshot(&self) -> Result<&GeoJson, Error> {
         self.status.try_to_error()?;
         Ok(&self.geo)
     }
 
+    /// Take the GeoJson data from the response
     pub fn take_snapshot(self) -> Result<GeoJson, Error> {
         self.status.try_into_error()?;
         Ok(self.geo)
     }
 }
 
+/// Response from [`crate::endpoint::AllAvailableCameras`], [`crate::endpoint::CamerasBySegementId`], and [`crate::endpoint::CameraByMacId`]
 #[derive(Deserialize)]
 pub struct CamerasResponse {
     #[serde(flatten)]
@@ -137,29 +175,48 @@ pub struct CamerasResponse {
     cameras: Vec<Camera>,
 }
 
+/// Details on the Telraam Camera
 #[derive(Deserialize, Serialize)]
 pub struct Camera {
+    /// The unique identifier of the camera instance
     pub instance_id: isize,
+    /// The unique identifier of the camera
     pub mac: usize,
+    /// The unique identifier of the user who has registered this camera
     pub user_id: isize,
+    /// The unique identifier of the street segment where the camera is installed
     pub segment_id: isize,
+    /// The Boolean (false or true) that encodes the side of road (relative to the direction of the segment defined by its coordinate chain) on which the camera is installed
     pub direction: bool,
+    /// The status of the camera (active, sending good data / non_active, not sending data / problematic, active but not sending good data)
     pub status: String,
+    /// Boolean (false or true) encoding some additional internally used information
     pub manual: bool,
+    /// The registration date and time of the instance (UTC)
     #[serde(with = "humantime_serde")]
     pub time_added: SystemTime,
+    /// null for active instances, or the date and time of the last active moment for the instance (UTC)
     #[serde(with = "humantime_serde")]
     pub time_end: Option<SystemTime>,
+    /// The date and time of the last transferred data packet, if available (UTC)
     #[serde(with = "humantime_serde")]
     pub last_data_package: SystemTime,
+    /// The date and time of the first transferred data packet, if available (UTC)
     #[serde(with = "humantime_serde")]
     pub first_data_package: SystemTime,
+    /// Boolean (true or false) that encodes if pedestrians are expected to be seen by the field of view of the camera in the left direction (user input)
     pub pedestrians_left: bool,
+    /// Boolean (true or false) that encodes if pedestrians are expected to be seen by the field of view of the camera in the right direction (user input)
     pub pedestrians_right: bool,
+    /// Boolean (true or false) that encodes if bikes are expected to be seen by the field of view of the camera in the left direction (user input)
     pub bikes_left: bool,
+    /// Boolean (true or false) that encodes if bikes are expected to be seen by the field of view of the camera in the right direction (user input)
     pub bikes_right: bool,
+    /// Boolean (true or false) that encodes if cars are expected to be seen by the field of view of the camera in the left direction (user input)
     pub cars_left: bool,
+    /// Boolean (true or false) that encodes if cars are expected to be seen by the field of view of the camera in the right direction (user input)
     pub cars_right: bool,
+    /// A "yes" or "no" field that gives information about the status of the calibration process that is neccesary to distinguish heavy vehicles from cars. When the field is "yes", heavy vehicles will be counted separately, when it is "no", heavy vehicles are still counted as cars.
     #[serde(deserialize_with = "from_yes_no", serialize_with = "to_yes_no")]
     pub is_calibration_done: bool,
 }
@@ -173,7 +230,7 @@ where
     impl Visitor<'_> for YesNoVisitor {
         type Value = bool;
 
-        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             write!(formatter, "a 'yes' or 'no' value")
         }
 
@@ -207,17 +264,20 @@ impl Response for CamerasResponse {
 }
 
 impl CamerasResponse {
+    /// Get a reference to all the cameras in the response
     pub fn cameras(&self) -> Result<&[Camera], Error> {
         self.status.try_to_error()?;
         Ok(&self.cameras)
     }
 
+    /// Take the cameras from the response
     pub fn take_cameras(self) -> Result<Vec<Camera>, Error> {
         self.status.try_into_error()?;
         Ok(self.cameras)
     }
 }
 
+/// Response from [`crate::endpoint::AllSegments`] and [`crate::endpoint::SegmentById`]
 #[derive(Deserialize)]
 pub struct SegmentResponse {
     #[serde(flatten)]
@@ -233,11 +293,13 @@ impl Response for SegmentResponse {
 }
 
 impl SegmentResponse {
+    /// Get a reference to the GeoJSON data for the segements
     pub fn segments(&self) -> Result<&GeoJson, Error> {
         self.status.try_to_error()?;
         Ok(&self.segment)
     }
 
+    /// Take the GeoJSON data from the segements
     pub fn take_segments(self) -> Result<GeoJson, Error> {
         self.status.try_into_error()?;
         Ok(self.segment)

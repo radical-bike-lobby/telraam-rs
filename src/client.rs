@@ -1,3 +1,5 @@
+//! Client library, based on reqwest, this sets up connection with required parameters for the Telraam API endpoints
+
 use std::error::Error;
 
 use reqwest::{
@@ -11,9 +13,15 @@ static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_P
 
 const TELRAAM_NET: &str = "https://telraam-api.net";
 
+/// An HTTPS Client for working with the Telraam API
 pub struct TelraamClient(Client);
 
 impl TelraamClient {
+    /// Constructs a new Client
+    ///
+    /// # Arguments
+    ///
+    /// * `new` - The API token from [Telraam](https://telraam.net/en/admin/mijn-eigen-telraam/tokens) for this connection.
     pub fn new(api_token: &str) -> Result<Self, Box<dyn Error>> {
         let mut headers = HeaderMap::new();
         let mut api_token = HeaderValue::from_str(api_token)?;
@@ -31,6 +39,15 @@ impl TelraamClient {
         Ok(Self(client))
     }
 
+    /// Send a request to the given endpoint, the response is endpoint specific
+    ///
+    /// # Argument
+    ///
+    /// * `endpoint` - The endpoint to use for the connection
+    ///
+    /// # Returns
+    ///
+    /// The result is endpoint specific, but will always be serializable, see `serde_json::to_string_pretty`
     pub fn send<E: Endpoint>(&self, endpoint: &E) -> Result<E::Response, Box<dyn Error>> {
         let mut url = format!(
             "{base}/{version}/{endpoint}",
