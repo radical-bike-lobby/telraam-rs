@@ -3,7 +3,9 @@ use std::{collections::HashMap, time::SystemTime};
 use reqwest::Method;
 use serde::{de::DeserializeOwned, Serialize, Serializer};
 
-use crate::response::{CamerasResponse, Response, TrafficResponse, WelcomeResponse};
+use crate::response::{
+    CamerasResponse, Response, SegmentResponse, TrafficResponse, WelcomeResponse,
+};
 
 /// Endpoint is a trait that defines the shape of all the API endpoints in Telraam
 ///
@@ -128,6 +130,32 @@ impl Endpoint for CameraByMacId {
 
     fn path_params(&self) -> Option<&str> {
         Some(&self.mac_id)
+    }
+}
+
+pub struct AllSegments;
+
+impl Endpoint for AllSegments {
+    const PATH: &'static str = "segments/all";
+    const METHOD: Method = Method::GET;
+
+    type Response = SegmentResponse;
+    type Request = ();
+}
+
+pub struct SegmentById {
+    segment_id: String,
+}
+
+impl Endpoint for SegmentById {
+    const PATH: &'static str = "segments/id";
+    const METHOD: Method = Method::GET;
+
+    type Response = SegmentResponse;
+    type Request = ();
+
+    fn path_params(&self) -> Option<&str> {
+        Some(&self.segment_id)
     }
 }
 
