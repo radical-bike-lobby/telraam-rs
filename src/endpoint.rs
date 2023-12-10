@@ -104,7 +104,7 @@ pub struct CamerasBySegmentId {
 }
 
 impl Endpoint for CamerasBySegmentId {
-    const PATH: &'static str = "cameras";
+    const PATH: &'static str = "cameras/segment";
     const METHOD: Method = Method::GET;
 
     type Response = CamerasResponse;
@@ -112,6 +112,22 @@ impl Endpoint for CamerasBySegmentId {
 
     fn path_params(&self) -> Option<&str> {
         Some(&self.segment_id)
+    }
+}
+
+pub struct CameraByMacId {
+    mac_id: String,
+}
+
+impl Endpoint for CameraByMacId {
+    const PATH: &'static str = "cameras";
+    const METHOD: Method = Method::GET;
+
+    type Response = CamerasResponse;
+    type Request = ();
+
+    fn path_params(&self) -> Option<&str> {
+        Some(&self.mac_id)
     }
 }
 
