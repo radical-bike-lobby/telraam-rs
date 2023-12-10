@@ -17,6 +17,7 @@ struct Args {
 enum Commands {
     Welcome(endpoint::Welcome),
     Traffic(endpoint::Traffic),
+    LiveTrafficSnapshot(endpoint::LiveTrafficSnapshot),
 }
 
 fn welcome(
@@ -37,6 +38,15 @@ fn traffic(
     Ok(())
 }
 
+fn live_traffic_snapshot(
+    client: &TelraamClient,
+    request: &endpoint::LiveTrafficSnapshot,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let reports = client.send(request)?.take_reports()?;
+    println!("{}", serde_json::to_string_pretty(&reports)?);
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
@@ -46,6 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match &args.command {
         Commands::Welcome(welcome_req) => welcome(&client, welcome_req)?,
         Commands::Traffic(traffic_req) => traffic(&client, traffic_req)?,
+        Commands::LiveTrafficSnapshot(traffic_req) => live_traffic_snapshot(&client, traffic_req)?,
     }
 
     Ok(())

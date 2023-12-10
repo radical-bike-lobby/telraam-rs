@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::SystemTime};
 #[cfg(feature = "clap")]
 use clap::{Args, Parser, ValueEnum};
 use reqwest::Method;
-use serde::{de::DeserializeOwned, Serialize, Serializer};
+use serde::{Serialize, Serializer};
 
 use crate::response::{
     CamerasResponse, Response, SegmentResponse, TrafficResponse, WelcomeResponse,
@@ -16,7 +16,7 @@ pub trait Endpoint {
     const PATH: &'static str;
     const METHOD: Method;
 
-    type Response: Response + DeserializeOwned;
+    type Response: Response;
     type Request: Serialize;
 
     /// Payload should only be associated for POST, PUT, or PATCH requests
@@ -50,7 +50,7 @@ impl Endpoint for Welcome {
 #[derive(Debug)]
 #[cfg_attr(feature = "clap", derive(Parser))]
 pub struct Traffic {
-    #[command(flatten)]
+    #[cfg_attr(feature = "clap", command(flatten))]
     request: TrafficRequest,
 }
 
@@ -98,6 +98,8 @@ pub enum TrafficLevel {
     Instance,
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct LiveTrafficSnapshot;
 
 impl Endpoint for LiveTrafficSnapshot {

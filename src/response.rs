@@ -2,13 +2,13 @@ use std::time::SystemTime;
 
 use geojson::GeoJson;
 use serde::{
-    de::{self, Visitor},
+    de::{self, DeserializeOwned, Visitor},
     Deserialize, Deserializer, Serialize,
 };
 
 use crate::error::Error;
 
-pub trait Response {
+pub trait Response: DeserializeOwned {
     fn status(&self) -> &Status;
 }
 
