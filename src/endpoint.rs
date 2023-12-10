@@ -43,7 +43,9 @@ impl Endpoint for Welcome {
     type Request = ();
 }
 
-pub struct Traffic;
+pub struct Traffic {
+    request: TrafficRequest,
+}
 
 impl Endpoint for Traffic {
     const PATH: &'static str = "reports/traffic";
@@ -51,6 +53,10 @@ impl Endpoint for Traffic {
 
     type Response = TrafficResponse;
     type Request = TrafficRequest;
+
+    fn payload(&self) -> Option<&Self::Request> {
+        Some(&self.request)
+    }
 }
 
 #[derive(Serialize)]
