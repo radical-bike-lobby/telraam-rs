@@ -158,6 +158,8 @@ impl Endpoint for CameraByMacId {
     }
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct AllSegments;
 
 impl Endpoint for AllSegments {
