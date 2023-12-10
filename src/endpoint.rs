@@ -1,5 +1,7 @@
 use std::{collections::HashMap, time::SystemTime};
 
+#[cfg(feature = "clap")]
+use clap::{Args, Parser, ValueEnum};
 use reqwest::Method;
 use serde::{de::DeserializeOwned, Serialize, Serializer};
 
@@ -33,6 +35,8 @@ pub trait Endpoint {
     }
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct Welcome;
 
 impl Endpoint for Welcome {
@@ -43,7 +47,10 @@ impl Endpoint for Welcome {
     type Request = ();
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct Traffic {
+    #[command(flatten)]
     request: TrafficRequest,
 }
 
@@ -59,14 +66,17 @@ impl Endpoint for Traffic {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, Serialize)]
+#[cfg_attr(feature = "clap", derive(Args))]
 pub struct TrafficRequest {
     level: TrafficLevel,
     format: String,
     id: String,
     #[serde(serialize_with = "format_rfc3339_millis")]
+    #[cfg_attr(feature = "clap", arg(value_parser = humantime::parse_rfc3339_weak))]
     time_start: SystemTime,
     #[serde(serialize_with = "format_rfc3339_millis")]
+    #[cfg_attr(feature = "clap", arg(value_parser = humantime::parse_rfc3339_weak))]
     time_end: SystemTime,
 }
 
@@ -78,7 +88,8 @@ fn format_rfc3339_millis<S: Serializer>(
     serializer.serialize_str(&time.to_string())
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize)]
+#[cfg_attr(feature = "clap", derive(ValueEnum))]
 pub enum TrafficLevel {
     #[default]
     #[serde(rename = "segments")]

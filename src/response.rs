@@ -3,7 +3,7 @@ use std::time::SystemTime;
 use geojson::GeoJson;
 use serde::{
     de::{self, Visitor},
-    Deserialize, Deserializer,
+    Deserialize, Deserializer, Serialize,
 };
 
 use crate::error::Error;
@@ -76,7 +76,7 @@ impl TrafficResponse {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Report {
     pub instance_id: isize,
     pub segment_id: isize,
