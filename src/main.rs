@@ -47,8 +47,8 @@ fn live_traffic_snapshot(
     client: &TelraamClient,
     request: &endpoint::LiveTrafficSnapshot,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let reports = client.send(request)?.take_reports()?;
-    println!("{}", serde_json::to_string_pretty(&reports)?);
+    let snapshot = client.send(request)?.take_snapshot()?;
+    println!("{}", serde_json::to_string_pretty(&snapshot)?);
     Ok(())
 }
 

@@ -6,7 +6,8 @@ use reqwest::Method;
 use serde::{Serialize, Serializer};
 
 use crate::response::{
-    CamerasResponse, Response, SegmentResponse, TrafficResponse, WelcomeResponse,
+    CamerasResponse, Response, SegmentResponse, TrafficResponse, TrafficSnapshotResponse,
+    WelcomeResponse,
 };
 
 /// Endpoint is a trait that defines the shape of all the API endpoints in Telraam
@@ -106,7 +107,7 @@ impl Endpoint for LiveTrafficSnapshot {
     const PATH: &'static str = "reports/traffic_snapshot_live";
     const METHOD: Method = Method::GET;
 
-    type Response = TrafficResponse;
+    type Response = TrafficSnapshotResponse;
     type Request = ();
 }
 

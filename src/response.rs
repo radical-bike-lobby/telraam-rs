@@ -461,6 +461,18 @@ mod tests {
     }
 
     #[test]
+    fn test_deserialize_traffic_snapshot_2023_12_9() {
+        let mut json = String::new();
+
+        std::fs::File::open("tests/data/traffic_snapshot_live_2023_12_9.json")
+            .expect("failed to open test data")
+            .read_to_string(&mut json)
+            .expect("failed to read test data");
+
+        serde_json::from_str::<TrafficSnapshotResponse>(&json).expect("failed to parse json");
+    }
+
+    #[test]
     fn test_deserialize_all_cameras() {
         let json = r#"
     {
