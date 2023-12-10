@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use telraam_rs::{client::TelraamClient, endpoint, response::Response};
+use telraam::{client::TelraamClient, endpoint, response::Response};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
