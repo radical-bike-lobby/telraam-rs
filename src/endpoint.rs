@@ -140,6 +140,8 @@ impl Endpoint for CamerasBySegmentId {
     }
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct CameraByMacId {
     mac_id: String,
 }

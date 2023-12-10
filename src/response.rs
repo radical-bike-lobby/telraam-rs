@@ -133,6 +133,7 @@ impl TrafficSnapshotResponse {
 pub struct CamerasResponse {
     #[serde(flatten)]
     status: Status,
+    #[serde(alias = "camera")]
     cameras: Vec<Camera>,
 }
 
