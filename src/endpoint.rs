@@ -74,6 +74,16 @@ pub enum TrafficLevel {
     Instance,
 }
 
+pub struct LiveTrafficSnapshot;
+
+impl Endpoint for LiveTrafficSnapshot {
+    const PATH: &'static str = "reports/traffic_snapshot_live";
+    const METHOD: Method = Method::GET;
+
+    type Response = TrafficResponse;
+    type Request = ();
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::Value;
