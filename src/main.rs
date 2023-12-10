@@ -2,7 +2,6 @@ use clap::{Parser, Subcommand};
 
 use telraam::{client::TelraamClient, endpoint, response::Response};
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {

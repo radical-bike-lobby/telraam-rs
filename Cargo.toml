@@ -2,6 +2,14 @@
 name = "telraam-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["The Radical Bike Lobby"]
+description = "Teraam API CLI and library for collecting data from the IOT devices"
+readme = "README.md"
+
+keywords = ["telraam"]
+homepage = "https://github.com/radical-bike-lobby"
+repository = "https://github.com/radical-bike-lobby/telraam-rs"
+license = "MIT"
 
 [lib]
 name = "telraam"
