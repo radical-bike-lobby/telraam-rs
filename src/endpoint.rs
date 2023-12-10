@@ -110,6 +110,8 @@ impl Endpoint for LiveTrafficSnapshot {
     type Request = ();
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "clap", derive(Parser))]
 pub struct AllAvailableCameras;
 
 impl Endpoint for AllAvailableCameras {

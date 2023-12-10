@@ -6,7 +6,7 @@ use telraam::{client::TelraamClient, endpoint, response::Response};
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short = 't', env = "TELRAAM_TOKEN")]
+    #[arg(short = 't', env = "TELRAAM_TOKEN", hide_env_values = true)]
     telraam_token: String,
 
     #[command(subcommand)]
@@ -18,6 +18,7 @@ enum Commands {
     Welcome(endpoint::Welcome),
     Traffic(endpoint::Traffic),
     LiveTrafficSnapshot(endpoint::LiveTrafficSnapshot),
+    AllAvailableCameras(endpoint::AllAvailableCameras),
 }
 
 fn welcome(
@@ -47,6 +48,15 @@ fn live_traffic_snapshot(
     Ok(())
 }
 
+fn all_available_cameras(
+    client: &TelraamClient,
+    request: &endpoint::AllAvailableCameras,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let cameras = client.send(request)?.take_cameras()?;
+    println!("{}", serde_json::to_string_pretty(&cameras)?);
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
@@ -57,6 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Commands::Welcome(welcome_req) => welcome(&client, welcome_req)?,
         Commands::Traffic(traffic_req) => traffic(&client, traffic_req)?,
         Commands::LiveTrafficSnapshot(traffic_req) => live_traffic_snapshot(&client, traffic_req)?,
+        Commands::AllAvailableCameras(cameras_req) => all_available_cameras(&client, cameras_req)?,
     }
 
     Ok(())

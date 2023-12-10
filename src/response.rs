@@ -3,7 +3,7 @@ use std::time::SystemTime;
 use geojson::GeoJson;
 use serde::{
     de::{self, DeserializeOwned, Visitor},
-    Deserialize, Deserializer, Serialize,
+    Deserialize, Deserializer, Serialize, Serializer,
 };
 
 use crate::error::Error;
@@ -136,7 +136,7 @@ pub struct CamerasResponse {
     cameras: Vec<Camera>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Camera {
     pub instance_id: isize,
     pub mac: usize,
@@ -159,7 +159,7 @@ pub struct Camera {
     pub bikes_right: bool,
     pub cars_left: bool,
     pub cars_right: bool,
-    #[serde(deserialize_with = "from_yes_no")]
+    #[serde(deserialize_with = "from_yes_no", serialize_with = "to_yes_no")]
     pub is_calibration_done: bool,
 }
 
@@ -189,6 +189,14 @@ where
     }
 
     deserializer.deserialize_str(YesNoVisitor)
+}
+
+fn to_yes_no<S: Serializer>(value: &bool, serializer: S) -> Result<S::Ok, S::Error> {
+    if *value {
+        serializer.serialize_str("yes")
+    } else {
+        serializer.serialize_str("no")
+    }
 }
 
 impl Response for CamerasResponse {
